@@ -4,7 +4,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 export class SceneManager {
-  constructor() {
+  constructor(profile) {
+    this.profile = profile;
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x03060d, 0.018);
 
@@ -14,26 +15,31 @@ export class SceneManager {
       0.1,
       200
     );
-    this.camera.position.set(0, 0, 26);
+    this.camera.position.set(0, 0, this.profile.isMobile && this.profile.portrait ? 30 : 26);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.profile.pixelRatioCap));
     this.renderer.setClearColor(0x03060d, 1);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.domElement.style.touchAction = 'none';
 
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.composer.addPass(
-      new UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.85,
-        0.9,
-        0.18
-      )
-    );
+    if (this.profile.enableBloom) {
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
+      this.composer.addPass(
+        new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          this.profile.bloomStrength,
+          this.profile.bloomRadius,
+          this.profile.bloomThreshold
+        )
+      );
+    } else {
+      this.composer = null;
+    }
 
     this.starfield = this.createStarfield();
     this.scene.add(this.starfield);
@@ -43,7 +49,7 @@ export class SceneManager {
   }
 
   createStarfield() {
-    const count = 1400;
+    const count = this.profile.starfieldCount;
     const positions = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
 
@@ -99,10 +105,15 @@ export class SceneManager {
   }
 
   onWindowResize() {
+    this.profile.portrait = window.innerHeight >= window.innerWidth;
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
+    this.camera.position.z = this.profile.isMobile && this.profile.portrait ? 30 : 26;
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.composer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.profile.pixelRatioCap));
+    if (this.composer) {
+      this.composer.setSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   update(time) {
@@ -112,6 +123,11 @@ export class SceneManager {
   }
 
   render() {
-    this.composer.render();
+    if (this.composer) {
+      this.composer.render();
+      return;
+    }
+
+    this.renderer.render(this.scene, this.camera);
   }
 }

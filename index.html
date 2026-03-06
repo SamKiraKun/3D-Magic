@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cosmic Gestures</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
@@ -23,7 +23,7 @@
           </div>
           <div class="metric-card">
             <span class="metric-label">Template</span>
-            <strong id="template-label">Heart</strong>
+            <strong id="template-label">Spiral Galaxy</strong>
           </div>
           <div class="metric-card">
             <span class="metric-label">Hand</span>
@@ -38,8 +38,9 @@
         <div class="instructions">
           <p>Open palm expands the field.</p>
           <p>Closed fist collapses particles inward.</p>
-          <p>Pinch cycles through heart, flower, saturn, fireworks, spiral, and wave forms.</p>
+          <p>Pinch cycles through twenty procedural templates including galaxies, helixes, wormholes, storms, and crystal forms.</p>
           <p>Move your hand to steer the center of motion.</p>
+          <p>On phones, drag one finger to guide, hold to compress, and use two fingers to switch shapes.</p>
         </div>
       </aside>
 
@@ -49,6 +50,18 @@
           <span class="preview-note">Mirrored so gestures feel direct.</span>
         </div>
         <video id="webcam" autoplay playsinline muted></video>
+      </section>
+
+      <section id="launch-panel" class="panel launch-panel">
+        <p class="eyebrow">Phone-ready startup</p>
+        <h2>Start with a tap</h2>
+        <p id="launch-copy" class="launch-copy-text">
+          Mobile browsers usually need a tap before camera access and heavy graphics can begin.
+        </p>
+        <div class="launch-actions">
+          <button id="start-button" class="launch-button primary" type="button">Start Camera</button>
+          <button id="touch-button" class="launch-button secondary" type="button">Touch Only</button>
+        </div>
       </section>
     </div>
 

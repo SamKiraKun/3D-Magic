@@ -19,6 +19,8 @@ export class GestureRecognizer {
     this.isTracked = false;
     this.gestureLabel = 'Searching';
     this.currentTemplateIdx = 0;
+    this.inputMode = 'ambient';
+    this.manualMode = false;
 
     this.wasPinching = false;
     this.lastPinchTime = 0;
@@ -26,7 +28,12 @@ export class GestureRecognizer {
   }
 
   update(landmarks) {
+    if (this.manualMode) {
+      return;
+    }
+
     this.isTracked = true;
+    this.inputMode = 'camera';
 
     const wrist = landmarks[0];
     const palmCenter = this.averagePoints([
@@ -82,9 +89,7 @@ export class GestureRecognizer {
     this.handHeight = THREE.MathUtils.clamp(1 - palmCenter.y, 0, 1);
 
     if (isPinching && !this.wasPinching && now - this.lastPinchTime > this.pinchCooldown) {
-      this.currentTemplateIdx = (this.currentTemplateIdx + 1) % TEMPLATE_NAMES.length;
-      this.particleSystem.morphTo(TEMPLATE_NAMES[this.currentTemplateIdx]);
-      this.lastPinchTime = now;
+      this.cycleTemplate(now);
     }
 
     this.wasPinching = isPinching;
@@ -98,7 +103,12 @@ export class GestureRecognizer {
   }
 
   noHand() {
+    if (this.manualMode) {
+      return;
+    }
+
     this.isTracked = false;
+    this.inputMode = 'ambient';
     this.gestureLabel = 'Searching';
     this.targetPos.lerp(new THREE.Vector3(0, 0, 0), 0.04);
     this.openIntensity = THREE.MathUtils.lerp(this.openIntensity, 0, 0.05);
@@ -143,6 +153,39 @@ export class GestureRecognizer {
     return average;
   }
 
+  cycleTemplate(now = performance.now() * 0.001) {
+    if (now - this.lastPinchTime <= this.pinchCooldown) {
+      return;
+    }
+
+    this.currentTemplateIdx = (this.currentTemplateIdx + 1) % TEMPLATE_NAMES.length;
+    this.particleSystem.morphTo(TEMPLATE_NAMES[this.currentTemplateIdx]);
+    this.lastPinchTime = now;
+  }
+
+  setManualControl({ position, openIntensity, fistIntensity, energy, handHeight, gestureLabel }) {
+    this.manualMode = true;
+    this.inputMode = 'touch';
+    this.isTracked = true;
+    this.targetPos.copy(position);
+    this.openIntensity = THREE.MathUtils.lerp(this.openIntensity, openIntensity, 0.28);
+    this.fistIntensity = THREE.MathUtils.lerp(this.fistIntensity, fistIntensity, 0.28);
+    this.energy = THREE.MathUtils.lerp(this.energy, energy, 0.2);
+    this.handHeight = handHeight;
+    this.gestureLabel = gestureLabel;
+  }
+
+  clearManualControl() {
+    if (!this.manualMode) {
+      return;
+    }
+
+    this.manualMode = false;
+    this.inputMode = 'ambient';
+    this.isTracked = false;
+    this.gestureLabel = 'Searching';
+  }
+
   dist(pointA, pointB) {
     const dx = pointA.x - pointB.x;
     const dy = pointA.y - pointB.y;
@@ -151,7 +194,7 @@ export class GestureRecognizer {
   }
 
   getFrameState() {
-    this.currentPos.lerp(this.targetPos, 0.12);
+    this.currentPos.lerp(this.targetPos, this.manualMode ? 0.2 : 0.12);
 
     return {
       handPosition: this.currentPos,
@@ -160,7 +203,8 @@ export class GestureRecognizer {
       energy: this.energy,
       handHeight: this.handHeight,
       gestureLabel: this.gestureLabel,
-      isTracked: this.isTracked
+      isTracked: this.isTracked,
+      inputMode: this.inputMode
     };
   }
 }

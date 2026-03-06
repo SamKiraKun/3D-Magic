@@ -4,10 +4,11 @@ import fragmentShader from './shaders/fragment.glsl?raw';
 import { getTemplateLabel, getTemplateMode, getTemplatePositions } from './templates.js';
 
 export class ParticleSystem {
-  constructor(scene, count) {
+  constructor(scene, count, profile) {
     this.scene = scene;
     this.count = count;
-    this.currentTemplateName = 'heart';
+    this.profile = profile;
+    this.currentTemplateName = 'spiralGalaxy';
     this.morphDuration = 1.65;
     this.morphing = false;
     this.morphStartTime = 0;
@@ -44,7 +45,7 @@ export class ParticleSystem {
       uMorphProgress: { value: 1 },
       uTemplateFrom: { value: currentMode },
       uTemplateTo: { value: currentMode },
-      uSizeScale: { value: window.innerHeight * 0.22 }
+      uSizeScale: { value: window.innerHeight * (this.profile.isLowPower ? 0.18 : 0.22) }
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -60,7 +61,7 @@ export class ParticleSystem {
     this.scene.add(this.points);
 
     window.addEventListener('resize', () => {
-      this.uniforms.uSizeScale.value = window.innerHeight * 0.22;
+      this.uniforms.uSizeScale.value = window.innerHeight * (this.profile.isLowPower ? 0.18 : 0.22);
     });
   }
 
